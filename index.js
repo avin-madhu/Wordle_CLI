@@ -1,5 +1,6 @@
 #!usr/bin/env node 
 
+import fs from 'fs';
 import chalk from 'chalk';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
@@ -11,10 +12,20 @@ let secretWord;
 let PlayerName;
 let tries = 6;
 
+// Function to read words from a file
+function readWordsFromFile(filePath) {
+  try {
+    const data = fs.readFileSync(filePath, 'utf8');
+    return data.split('\n').map((word) => word.trim()).filter(Boolean);
+  } catch (error) {
+    console.error(`Error reading file: ${error.message}`);
+    process.exit(1);
+  }
+}
 
 // Function to generate a random word for the game
 function generateSecretWord() {
-  const words = ['apple']; // Add more words as needed
+  const words = readWordsFromFile('words.txt');
   const randomIndex = Math.floor(Math.random() * words.length);
   return words[randomIndex];
 }
@@ -23,9 +34,7 @@ const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 
 // Display a welcome message and introduce the basic rules.
 async function welcome() {
-//   console.log(gradient.pastel('Welcome to Wordle CLI\n'));
   console.clear();
-    const msg = `Congrats!! ${PlayerName}`;
     const Header = "Wordle CLI ";
     figlet(Header, (err, data)=>{
         console.log("\n\n");
@@ -50,7 +59,6 @@ async function askName() {
       return 'Player';
     },
   });
-  console.log(`Hello, ${chalk.bold(ans.Player_Name)}! Let's play Wordle.`);
   return ans.Player_Name;
 }
 
@@ -59,23 +67,26 @@ function generateClues(word, secret) {
 
    const clues = [];
 
-  for (let i = 0; i < secret.length; i++) {
-    if (word[i] === secret[i]) {
-      clues.push(chalk.green(word[i])); // Correct letter in the correct position
-    } else if (secret.includes(word[i])) {
-      clues.push(chalk.yellow(word[i])); // Correct letter in the wrong position
-    } else {
-      clues.push(chalk.gray('_')); // Incorrect letter
+  const words = readWordsFromFile('words.txt');
+  if(words.includes(word))
+  {
+    for (let i = 0; i < secret.length; i++) {
+      if (word[i] === secret[i]) {
+        clues.push(chalk.green(word[i])); // Correct letter in the correct position
+      } else if (secret.includes(word[i])) {
+        clues.push(chalk.yellow(word[i])); // Correct letter in the wrong position
+      } else {
+        clues.push(chalk.gray('_')); // Incorrect letter
+      }
     }
+    return clues.join(' ');
+  }
+  else
+  {
+    console.log("\nThe word is not in the word List\nTry Again\n");
   }
 
-  return clues.join(' ');
-}
 
-
-function winner()
-{
-    
 }
 
 // Handle the player's guess
@@ -88,12 +99,12 @@ function winner()
   if (word === secretWord) {
     spinner.success('');
     console.clear();
-    console.log("hey bro ur right!");
-    const msg = `Congrats!! ${PlayerName}`;
+    const msg = `C o n g r a t s \t\t\t${PlayerName}`;
 
     figlet(msg, (err, data)=>{
         console.log(gradient.pastel.multiline(data));
     });
+    console.log("\n\nYou Guessed the correct word\nThank you for playing!\n\n\n\n");
     process.exit(0);
   } else {
     spinner.error({ text: `Incorrect guess. Clues: ${clues}\n\n` });
@@ -111,7 +122,7 @@ async function makeGuess() {
   const word = await inquirer.prompt({
     name: 'Get_word',
     type: 'input',
-    message: `Attempt-${6 - tries + 1}: Guess the word:`,
+    message: `\n\nAttempt-${6 - tries + 1}: Guess the word:`,
     validate(input) {
       if (!input || input.trim() === '') {
         return 'Please enter a word.';
@@ -126,8 +137,7 @@ async function makeGuess() {
 // Main game loop
 async function playWordle() {
   await welcome();
- PlayerName =  await askName();
-
+    PlayerName = await askName();
   while (tries > 0) {
     await makeGuess();
   }
