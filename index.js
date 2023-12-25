@@ -35,19 +35,27 @@ const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 // Display a welcome message and introduce the basic rules.
 async function welcome() {
   console.clear();
-    const Header = "Wordle CLI ";
-    figlet(Header, (err, data)=>{
-        console.log("\n\n");
-        console.log(gradient.pastel.multiline(data));
-    });
 
-  console.log(`${chalk.bgBlue('How to play')}
+  // Print Wordle CLI text synchronously
+  const Header = "Wordle CLI ";
+  const headerText = await new Promise((resolve) => {
+    figlet(Header, (err, data) => {
+      resolve(data);
+    });
+  });
+
+  console.log("\n\n");
+  console.log(gradient.pastel.multiline(headerText));
+
+  // Display game rules
+  console.log(`${chalk.bgBlackBright.bold('How to play')}
     -> Enter a word to guess.
     -> You have 6 guesses.
     `);
 
   secretWord = generateSecretWord();
 }
+
 
 // Get the name of the player
 async function askName() {
@@ -136,12 +144,12 @@ async function makeGuess() {
 
 // Main game loop
 async function playWordle() {
-  await welcome();
-    PlayerName = await askName();
+  // PlayerName = await askName();
   while (tries > 0) {
     await makeGuess();
   }
 }
 
 // Start the game
+await welcome();
 playWordle();
